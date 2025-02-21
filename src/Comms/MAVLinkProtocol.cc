@@ -8,6 +8,7 @@
  ****************************************************************************/
 
 #include "MAVLinkProtocol.h"
+#include "MAVLink/heatmap/mavlink_msg_heatpoint.h"
 #include "LinkManager.h"
 #include "MultiVehicleManager.h"
 #include "QGCApplication.h"
@@ -16,6 +17,7 @@
 #include "SettingsManager.h"
 #include "AppSettings.h"
 #include "QmlObjectListModel.h"
+#include "HeatpointModel.h"
 
 #include <QtCore/qapplicationstatic.h>
 #include <QtCore/QDir>
@@ -32,6 +34,7 @@ MAVLinkProtocol::MAVLinkProtocol(QObject *parent)
     : QObject(parent)
     , _tempLogFile(new QGCTemporaryFile(QStringLiteral("%2.%3").arg(_tempLogFileTemplate, _logFileExtension), this))
 {
+    m_heatpointModel = new HeatpointModel(this);
     // qCDebug(MAVLinkProtocolLog) << Q_FUNC_INFO << this;
 }
 
@@ -41,6 +44,13 @@ MAVLinkProtocol::~MAVLinkProtocol()
     _closeLogFile();
 
     // qCDebug(MAVLinkProtocolLog) << Q_FUNC_INFO << this;
+}
+
+void MAVLinkProtocol::storeHeatpoint(float lat, float lon, uint8_t color_intensity) {
+    Heatpoint point(lat, lon, color_intensity);
+    heatpoints_.append(point);
+    qDebug() << "Stored heatpoint: Lat:" << lat << "Lon:" << lon << "Intensity:" << color_intensity;
+    emit heatpointsChanged();
 }
 
 MAVLinkProtocol *MAVLinkProtocol::instance()
@@ -144,23 +154,24 @@ void MAVLinkProtocol::receiveBytes(LinkInterface *link, const QByteArray &data)
         return;
     }
 
-    for (const uint8_t &byte: data) {
-        const uint8_t mavlinkChannel = link->mavlinkChannel();
-        mavlink_message_t message{};
-        mavlink_status_t status{};
+    qDebug() << "Received data:" << data.size() << "bytes, raw:" << data.toHex();
 
-        if (mavlink_parse_char(mavlinkChannel, byte, &message, &status) != MAVLINK_FRAMING_OK) {
-            continue;
-        }
+    mavlink_message_t message{};
+    mavlink_status_t status{};
 
-        _updateVersion(link, mavlinkChannel);
-        _updateCounters(mavlinkChannel, message);
-        _forward(message);
-        _forwardSupport(message);
-        _logData(link, message);
-
-        if (!_updateStatus(link, linkPtr, mavlinkChannel, message)) {
-            break;
+    for (const uint8_t &byte : data) {
+        if (mavlink_parse_char(MAVLINK_COMM_0, byte, &message, &status)) {
+            qDebug() << "Parsed message - ID:" << message.msgid << "Length:" << message.len;
+            if (message.msgid == MAVLINK_MSG_ID_HEATPOINT) { // 555
+                mavlink_heatpoint_t heatpoint;
+                mavlink_msg_heatpoint_decode(&message, &heatpoint);
+                qDebug() << "Received HEATPOINT: Lat:" << heatpoint.lat
+                         << "Lon:" << heatpoint.lon
+                         << "Intensity:" << heatpoint.color_intensity;
+                storeHeatpoint(heatpoint.lat, heatpoint.lon, heatpoint.color_intensity);
+            }
+        } else {
+            qDebug() << "Parse failed for byte:" << QByteArray(1, byte).toHex();
         }
     }
 }

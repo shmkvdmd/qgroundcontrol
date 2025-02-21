@@ -12,9 +12,12 @@
 #include "QmlUnitsConversion.h"
 #include "QGCLoggingCategory.h"
 
+#include "MAVLinkProtocol.h"
+
 #include <QtCore/QTimer>
 #include <QtCore/QPointF>
 #include <QtPositioning/QGeoCoordinate>
+
 
 class ADSBVehicleManager;
 class FactGroup;
@@ -115,7 +118,8 @@ public:
     Q_PROPERTY(bool     hasAPMSupport           READ hasAPMSupport              CONSTANT)
     Q_PROPERTY(bool     hasMAVLinkInspector     READ hasMAVLinkInspector        CONSTANT)
 
-
+    Q_PROPERTY(MAVLinkProtocol* mavlinkProtocol READ mavlinkProtocol CONSTANT)
+    MAVLinkProtocol* mavlinkProtocol() { return _mavlinkProtocol; }
     //-------------------------------------------------------------------------
     // Elevation Provider
     Q_PROPERTY(QString  elevationProviderName           READ elevationProviderName              CONSTANT)
@@ -252,6 +256,7 @@ private:
     SettingsManager*        _settingsManager        = nullptr;
     QGCCorePlugin*          _corePlugin             = nullptr;
     QGCPalette*             _globalPalette          = nullptr;
+    MAVLinkProtocol*        _mavlinkProtocol        = nullptr;
 #ifndef QGC_NO_SERIAL_LINK
     FactGroup*              _gpsRtkFactGroup        = nullptr;
 #endif

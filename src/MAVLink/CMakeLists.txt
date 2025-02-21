@@ -45,7 +45,11 @@ message(STATUS "Building MAVLink")
 #         "MAVLINK_DIALECT all"
 #         "MAVLINK_VERSION 2.0"
 # )
-
+target_sources(MAVLink PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/heatmap/heatpoints.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/heatmap/mavlink_msg_heatpoint.h
+)
+target_sources(MAVLink PRIVATE ${MAVLINK_HEATMAP_SOURCES})
 include(CPM)
 CPMAddPackage(
     NAME mavlink

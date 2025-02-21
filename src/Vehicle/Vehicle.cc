@@ -55,6 +55,7 @@
 #include <StatusTextHandler.h>
 #include <MAVLinkSigning.h>
 #include "GimbalController.h"
+#include "MAVLink/heatmap/mavlink_msg_heatpoint.h"
 
 #ifdef QGC_UTM_ADAPTER
 #include "UTMSPVehicle.h"
@@ -187,6 +188,7 @@ Vehicle::Vehicle(LinkInterface*             link,
 
     // Start timer to limit altitude above terrain queries
     _altitudeAboveTerrQueryTimer.restart();
+    sendHeatpoint(55.7558, 37.6173, 7);
 }
 
 // Disconnected Vehicle for offline editing
@@ -229,6 +231,32 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
 
     _offlineFirmwareTypeSettingChanged(_firmwareType);  // This adds correct terrain capability bit
     _firmwarePlugin->initializeVehicle(this);
+}
+
+void Vehicle::sendHeatpoint(float lat, float lon, uint8_t color_intensity) {
+    mavlink_message_t msg;
+    mavlink_heatpoint_t heatpoint;
+
+    heatpoint.lat = lat;
+    heatpoint.lon = lon;
+    heatpoint.color_intensity = color_intensity;
+
+    mavlink_msg_heatpoint_pack(
+        _id,
+        0,
+        &msg,
+        heatpoint.lat,
+        heatpoint.lon,
+        heatpoint.color_intensity
+        );
+
+    SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
+    if (!sharedLink) {
+        qCDebug(VehicleLog) << "sendHeatpoint: No link available";
+        return;
+    }
+
+    sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
 }
 
 void Vehicle::trackFirmwareVehicleTypeChanges(void)

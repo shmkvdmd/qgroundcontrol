@@ -12,7 +12,6 @@
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
 #include "LinkManager.h"
-#include "MAVLinkProtocol.h"
 #include "FirmwarePluginManager.h"
 #include "AppSettings.h"
 #include "FlightMapSettings.h"
@@ -83,7 +82,8 @@ void QGroundControlQmlGlobal::registerQmlTypes()
     qmlRegisterUncreatableType<QGCGeoBoundingCube>      ("QGroundControl.FlightMap",             1, 0, "QGCGeoBoundingCube",  "Reference only");
     qmlRegisterUncreatableType<QGCMapPolygon>           ("QGroundControl.FlightMap",             1, 0, "QGCMapPolygon",       "Reference only");
     qmlRegisterUncreatableType<QmlObjectListModel>      ("QGroundControl",                       1, 0, "QmlObjectListModel",  "Reference only");
-
+    qmlRegisterUncreatableType<MAVLinkProtocol>("QGroundControl", 1, 0, "MAVLinkProtocol", "Reference only");
+    qRegisterMetaType<MAVLinkProtocol::Heatpoint>("Heatpoint");
     qmlRegisterType<MavlinkAction>                      ("QGroundControl.Controllers",           1, 0, "MavlinkAction");
     qmlRegisterType<MavlinkActionManager>               ("QGroundControl.Controllers",           1, 0, "MavlinkActionManager");
     qmlRegisterType<EditPositionDialogController>       ("QGroundControl.Controllers",           1, 0, "EditPositionDialogController");
@@ -99,7 +99,7 @@ void QGroundControlQmlGlobal::registerQmlTypes()
     qmlRegisterType<TerrainProfile>                     ("QGroundControl.Controls",              1, 0, "TerrainProfile");
     qmlRegisterType<ToolStripAction>                    ("QGroundControl.Controls",              1, 0, "ToolStripAction");
     qmlRegisterType<ToolStripActionList>                ("QGroundControl.Controls",              1, 0, "ToolStripActionList");
-
+    //qmlRegisterType(QUrl("qrc:/QGroundControl/FlightMap/HeatpointMapItem.qml"), "QGroundControl.FlightMap", 1, 0, "HeatpointMapItem");
     qmlRegisterSingletonType<QGroundControlQmlGlobal>   ("QGroundControl",                       1, 0, "QGroundControl",         qgroundcontrolQmlGlobalSingletonFactory);
     qmlRegisterSingletonType<ScreenToolsController>     ("QGroundControl.ScreenToolsController", 1, 0, "ScreenToolsController",  screenToolsControllerSingletonFactory);
 }
@@ -116,6 +116,7 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject *parent)
     , _settingsManager(SettingsManager::instance())
     , _corePlugin(QGCCorePlugin::instance())
     , _globalPalette(new QGCPalette(this))
+    , _mavlinkProtocol(MAVLinkProtocol::instance())
 #ifndef QGC_NO_SERIAL_LINK
     , _gpsRtkFactGroup(GPSManager::instance()->gpsRtk()->gpsRtkFactGroup())
 #endif

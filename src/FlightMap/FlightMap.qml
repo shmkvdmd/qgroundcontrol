@@ -21,6 +21,7 @@ import QGroundControl.ScreenTools
 import QGroundControl.MultiVehicleManager
 import QGroundControl.Vehicle
 import QGroundControl.QGCPositionManager
+//import QGroundControl.HeatpointMapItem
 
 Map {
     id: _map
@@ -63,6 +64,30 @@ Map {
     function centerToSpecifiedLocation() {
         specifyMapPositionDialog.createObject(mainWindow).open()
     }
+
+    MapItemView {
+            model: QGroundControl.mavlinkProtocol.heatpoints
+            delegate: MapQuickItem {
+                anchorPoint: Qt.point(sourceItem.width / 2, sourceItem.height / 2)
+                coordinate: QtPositioning.coordinate(modelData.lat, modelData.lon)
+                sourceItem: Rectangle {
+                    width: 20
+                    height: 20
+                    radius: 10
+                    opacity: 0.7
+                    color: {
+                        var i = modelData.color_intensity / 10.0;
+                        var r = i;
+                        var g = 1 - i;
+                        return Qt.rgba(r, g, 0, 1);
+                    }
+                    border.width: 1
+                    border.color: "black"
+                }
+                Component.onCompleted: console.log("Heatpoint added: Lat=" + modelData.lat + ", Lon=" + modelData.lon + ", Intensity=" + modelData.color_intensity)
+            }
+            Component.onCompleted: console.log("Heatpoints count:", QGroundControl.mavlinkProtocol.heatpointsCount())
+        }
 
     Component {
         id: specifyMapPositionDialog

@@ -20,6 +20,7 @@ qt_add_library(Comms STATIC
     TCPLink.h
     UDPLink.cc
     UDPLink.h
+    HeatpointModel.h HeatpointModel.cpp
 )
 
 target_link_libraries(Comms

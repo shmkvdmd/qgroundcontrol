@@ -285,6 +285,8 @@ public:
 
     Q_PROPERTY(bool     mavlinkSigning              READ mavlinkSigning             NOTIFY mavlinkSigningChanged)
 
+    void sendHeatpoint(float lat, float lon, uint8_t color_intensity);
+
     /// Resets link status counters
     Q_INVOKABLE void resetCounters  ();
 

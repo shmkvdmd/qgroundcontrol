@@ -18,6 +18,7 @@
 #include "MAVLinkLib.h"
 
 class QGCTemporaryFile;
+class HeatpointModel;
 
 Q_DECLARE_LOGGING_CATEGORY(MAVLinkProtocolLog)
 
@@ -27,7 +28,7 @@ Q_DECLARE_LOGGING_CATEGORY(MAVLinkProtocolLog)
 class MAVLinkProtocol : public QObject
 {
     Q_OBJECT
-
+    Q_PROPERTY(QList<Heatpoint> heatpoints READ getHeatpoints NOTIFY heatpointsChanged)
 public:
     /// Constructs an MAVLinkProtocol object.
     ///     @param parent The parent QObject.
@@ -35,6 +36,18 @@ public:
 
     /// Destructor for the MAVLinkProtocol class.
     ~MAVLinkProtocol();
+
+    struct Heatpoint {
+        float lat;
+        float lon;
+        uint8_t color_intensity;
+
+        Heatpoint() : lat(0), lon(0), color_intensity(0) {}
+        Heatpoint(float l, float ln, uint8_t i) : lat(l), lon(ln), color_intensity(i) {}
+    };
+
+    void storeHeatpoint(float lat, float lon, uint8_t color_intensity);
+    Q_INVOKABLE const QList<Heatpoint>& getHeatpoints() const { return heatpoints_; }
 
     /// Gets the singleton instance of MAVLinkProtocol.
     ///     @return The singleton instance.
@@ -74,6 +87,8 @@ public:
     /// Give the user an option to save these orphaned files.
     void checkForLostLogFiles();
 
+    HeatpointModel* heatpointModel() const { return m_heatpointModel; }
+
 signals:
     /// Heartbeat received on link
     void vehicleHeartbeatInfo(LinkInterface *link, int vehicleId, int componentId, int vehicleFirmwareType, int vehicleType);
@@ -88,6 +103,9 @@ signals:
     void systemIdChanged(int systemId);
 
     void mavlinkMessageStatus(int sysid, uint64_t totalSent, uint64_t totalReceived, uint64_t totalLoss, float lossPercent);
+
+    void heatpointModelChanged();
+    void heatpointsChanged();
 
 public slots:
     /// Receive bytes from a communication interface and constructs a MAVLink packet
@@ -146,6 +164,8 @@ private:
     int _systemId = kMaxSysId;
     unsigned _currentVersion = 100;
     bool _initialized = false;
+    QList<Heatpoint> heatpoints_;
+    HeatpointModel* m_heatpointModel = nullptr;
 
     static constexpr const char *_tempLogFileTemplate = "FlightDataXXXXXX"; ///< Template for temporary log file
     static constexpr const char *_logFileExtension = "mavlink";             ///< Extension for log files
@@ -153,3 +173,4 @@ private:
     static constexpr uint8_t kMaxSysId = 255;
     static constexpr uint8_t kMaxCompId = MAV_COMPONENT_ENUM_END - 1;
 };
+Q_DECLARE_METATYPE(MAVLinkProtocol::Heatpoint)
